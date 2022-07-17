@@ -4,11 +4,13 @@
 
 # NOTE: For a list of targets, run `make help`. <skr>
 
+NAME = euphony
+
 SHELL = /usr/bin/env bash
 
 TRACE ?= no
 
-ifeq (TRACE,yes)
+ifeq ($(TRACE),yes)
   Q =
 else
   Q = @
@@ -19,9 +21,9 @@ BL := $(shell tput setaf 4)
 CY := $(shell tput setaf 6)
 RS := $(shell tput sgr0)
 
-VENV = .venv
+VENV ?= .venv
 
-APT_PACKAGES = python3-pip python3-venv
+APT_PACKAGES ?= python3-pip python3-venv
 
 .PHONY: help
 help:
@@ -74,7 +76,7 @@ $(APT_PACKAGES) &:
 
 .PHONY: shell
 shell:
-	docker container exec -it -- $(CONTAINER) /usr/bin/env bash -c ' \
+	$(Q)docker container exec -it -- $(NAME) /usr/bin/env bash -c ' \
 	  export REMOTE_CONTAINERS_IPC=$$( \
 	    find /tmp -name '\''vscode-remote-containers-ipc*'\'' -type s \
 	      -echo "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);$$SHELL -l'
