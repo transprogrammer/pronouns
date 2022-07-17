@@ -4,9 +4,11 @@
 
 # NOTE: For a list of targets, run `make help`. <skr>
 
-DEBUG ?= no
+SHELL = /usr/bin/env bash
 
-ifeq (DEBUG,yes)
+TRACE ?= no
+
+ifeq (TRACE,yes)
   Q =
 else
   Q = @
@@ -14,50 +16,68 @@ endif
 
 BD := $(shell tput bold)
 BL := $(shell tput setaf 4)
-MG := $(shell tput setaf 5)
 CY := $(shell tput setaf 6)
 RS := $(shell tput sgr0)
+
+VENV = .venv
+
+APT_PACKAGES = python3-pip python3-venv
 
 .PHONY: help
 help:
 	$(Q)echo
 	$(Q)echo '$(BD)Main:$(RS)'
 	$(Q)echo
-	$(Q)echo '$(CY)install$(RS) - $(BL)runs install targets$(RS)'
-	$(Q)echo '$(CY)run$(RS)     - $(BL)runs harmony$(RS)'
+	$(Q)echo '$(CY)install$(RS) - $(BL)runs install targets.$(RS)'
+	$(Q)echo '$(CY)run$(RS)     - $(BL)runs harmony.$(RS)'
 	$(Q)echo
 	$(Q)echo '$(BD)Install:$(RS)'
 	$(Q)echo
-	$(Q)echo '$(CY)apt$(RS)     - $(BL)installs apt packages (pip, venv)$(RS)'
-	$(Q)echo '$(CY)pip$(RS)     - $(BL)installs pip packages from requirements.txt$(RS)'
+	$(Q)echo '$(CY)apt$(RS)     - $(BL)installs apt packages.$(RS)'
+	$(Q)echo '$(CY)pip$(RS)     - $(BL)installs pip packages.$(RS)'
 	$(Q)echo '$(CY)venv$(RS)    - $(BL)creates the python virtual environment$(RS)'
 	$(Q)echo
+	$(Q)echo '$(BD)Utility:$(RS)'
+	$(Q)echo
+	$(Q)echo '$(CY)shell$(RS)   - $(BL)starts an interactive shell in a docker dev env.$(RS)'
+	$(Q)echo
 
-SHELL = /usr/bin/env bash
+.PHONY: pip
+pip: activate pip-install deactivate
 
-VENV = .venv
-
-.PHONY: apt-get install pip venv
-
-install : apt pip venv
-
-apt:
-	sudo apt-get update
-	sudo apt-get install python3-pip python3-venv
-
-venv : $(VENV)
-$(VENV):
-	python3 -m venv .venv
-
-pip: $(VENV)
-	$(call activate); \
+.PHONY: pip-install
+pip-install:
 	pip install -r requirements.txt
 
-define activate
-	source $(VENV)/bin/activate
-endef
+.PHONY: exec-main
+exec-main:
+	$(Q)src/main.py || $(info run failed.)
 
-.PHONY: run
-run : pip
-	src/main.py
+.PHONY: activate deactivate
+activate deactivate: $(VENV)
+	$(Q)source $(VENV)/bin/$@
+
+.PHONY: venv
+venv: $(VENV)
+
+.PHONY: $(VENV)
+$(VENV): python3-venv
+	$(Q)python3 -m venv .venv
+
+.PHONY: apt
+apt: $(APT_PACKAGES)
+
+.PHONY: $(APT_PACKAGES)
+$(APT_PACKAGES) &:
+	$(Q)sudo apt-get update
+	$(Q)sudo apt-get install $(APT_PACKAGES)
+
+.PHONY: shell
+shell:
+	docker container exec -it -- $(CONTAINER) /usr/bin/env bash -c ' \
+	  export REMOTE_CONTAINERS_IPC=$$( \
+	    find /tmp -name '\''vscode-remote-containers-ipc*'\'' -type s \
+	      -echo "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);$$SHELL -l'
+
+FORCE:
 
