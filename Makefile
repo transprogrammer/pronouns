@@ -60,10 +60,9 @@ activate deactivate: $(VENV)
 	$(Q)source $(VENV)/bin/$@
 
 .PHONY: venv
-venv: $(VENV)
+venv: python3-venv $(VENV)
 
-.PHONY: $(VENV)
-$(VENV): python3-venv
+$(VENV):
 	$(Q)python3 -m venv .venv
 
 .PHONY: apt
