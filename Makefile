@@ -12,8 +12,10 @@ TRACE ?= no
 
 ifeq ($(TRACE),yes)
   Q =
+  V = v
 else
   Q = @
+  V = 
 endif
 
 BD := $(shell tput bold)
@@ -32,12 +34,13 @@ help:
 	$(Q)echo
 	$(Q)echo '$(CY)install$(RS) - $(BL)runs install targets.$(RS)'
 	$(Q)echo '$(CY)run$(RS)     - $(BL)runs harmony.$(RS)'
+	$(Q)echo '$(CY)clean$(RS)     - $(BL)cleans up file targets.$(RS)'
 	$(Q)echo
 	$(Q)echo '$(BD)Install:$(RS)'
 	$(Q)echo
 	$(Q)echo '$(CY)apt$(RS)     - $(BL)installs apt packages.$(RS)'
 	$(Q)echo '$(CY)pip$(RS)     - $(BL)installs pip packages.$(RS)'
-	$(Q)echo '$(CY)venv$(RS)    - $(BL)creates the python virtual environment$(RS)'
+	$(Q)echo '$(CY)venv$(RS)    - $(BL)creates the python venv.$(RS)'
 	$(Q)echo
 	$(Q)echo '$(BD)Utility:$(RS)'
 	$(Q)echo
@@ -45,22 +48,31 @@ help:
 	$(Q)echo
 
 .PHONY: pip
-pip: activate pip-install deactivate
+pip: requirements.txt
 
-.PHONY: pip-install
-pip-install:
-	pip install -r requirements.txt
+requirements.txt:
+	$(Q)$(call activate); \
+	python3 -m pip install -r requirements.txt; \
+	$(call deactivate)
 
 .PHONY: exec-main
 exec-main:
 	$(Q)src/main.py || $(info run failed.)
 
-.PHONY: activate deactivate
-activate deactivate: $(VENV)
-	$(Q)source $(VENV)/bin/$@
+define activate
+source $(VENV)/bin/$@
+endef
+
+define deactivate
+deactivate
+endef
 
 .PHONY: venv
+ifeq ($(shell dpkg-query -W --showformat='$${db:Status-Status}' python3-venv),installed)
+venv: $(VENV)
+else
 venv: python3-venv $(VENV)
+endif
 
 $(VENV):
 	$(Q)python3 -m venv .venv
@@ -79,6 +91,10 @@ shell:
 	  export REMOTE_CONTAINERS_IPC=$$( \
 	    find /tmp -name '\''vscode-remote-containers-ipc*'\'' -type s \
 	      -echo "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);$$SHELL -l'
+
+.PHONY: clean
+clean:
+	$(Q)rm -fr$(V) $(VENV)
 
 FORCE:
 
