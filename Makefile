@@ -11,11 +11,9 @@ SHELL = /usr/bin/env bash
 TRACE ?= no
 
 ifeq ($(TRACE),yes)
-  Q =
   V = v
 else
   Q = @
-  V = 
 endif
 
 BD := $(shell tput bold)
@@ -48,23 +46,16 @@ help:
 	$(Q)echo
 
 .PHONY: pip
-pip: requirements.txt
-
-requirements.txt:
+pip: $(VENV)
 	$(Q)$(call activate); \
-	python3 -m pip install -r requirements.txt; \
-	$(call deactivate)
+	python3 -m pip install -r requirements.txt
 
 .PHONY: exec-main
 exec-main:
 	$(Q)src/main.py || $(info run failed.)
 
 define activate
-source $(VENV)/bin/$@
-endef
-
-define deactivate
-deactivate
+source $(VENV)/bin/activate
 endef
 
 .PHONY: venv
