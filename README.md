@@ -1,2 +1,2 @@
-# harmony
+# euphony
 discord api utilities
