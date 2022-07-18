@@ -46,6 +46,9 @@ help:
 	$(Q)echo
 
 .PHONY: pip
+install: apt pip 
+
+.PHONY: pip
 pip: $(VENV)
 	$(Q)$(call activate); \
 	python3 -m pip install -r requirements.txt
