@@ -6,13 +6,14 @@ from lib.client import Client
 import discord
 from os import environ as env
 
-token = env['DISCORD_TOKEN']
+GAME = "growing up"
+
+TOKEN = env['DISCORD_TOKEN']
 
 intents = discord.Intents.default()
 
-print(intents)
-# intents.message_content = True
+activity = discord.Game(name=GAME)
 
-client = Client(intents=intents)
+client = Client(intents=intents, activity=activity)
 
-client.run(token)
+client.run(TOKEN)

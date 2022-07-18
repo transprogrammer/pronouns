@@ -48,6 +48,11 @@ help:
 .PHONY: pip
 install: apt pip 
 
+.PHONY: run
+run:
+	$(Q)$(call activate); \
+	src/main.py
+
 .PHONY: pip
 pip: $(VENV)
 	$(Q)$(call activate); \
