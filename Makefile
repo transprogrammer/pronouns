@@ -28,7 +28,27 @@ RS := $(shell tput sgr0)
 
 VENV ?= .venv
 
-APT_PACKAGES ?= python3-pip python3-venv
+APT_PACKAGES += build-essential
+APT_PACKAGES += ccache
+APT_PACKAGES += gdb
+APT_PACKAGES += lcov
+APT_PACKAGES += libb2-dev
+APT_PACKAGES += libbz2-dev
+APT_PACKAGES += libffi-dev
+APT_PACKAGES += libgdbm-compat-dev
+APT_PACKAGES += libgdbm-dev
+APT_PACKAGES += liblzma-dev
+APT_PACKAGES += libncurses5-dev
+APT_PACKAGES += libreadline6-dev
+APT_PACKAGES += libsqlite3-dev
+APT_PACKAGES += libssl-dev
+APT_PACKAGES += lzma
+APT_PACKAGES += lzma-dev
+APT_PACKAGES += pkg-config
+APT_PACKAGES += tk-dev
+APT_PACKAGES += uuid-dev
+APT_PACKAGES += xvfb
+APT_PACKAGES += zlib1g-dev
 
 .PHONY: help
 help:
@@ -42,6 +62,7 @@ help:
 	$(Q)echo '$(BD)Install:$(RS)'
 	$(Q)echo
 	$(Q)echo '$(CY)apt$(RS)     - $(BL)installs apt packages.$(RS)'
+	$(Q)echo '$(CY)python$(RS)  - $(BL)installs python.$(RS)'
 	$(Q)echo '$(CY)pip$(RS)     - $(BL)installs pip packages.$(RS)'
 	$(Q)echo '$(CY)venv$(RS)    - $(BL)creates the python venv.$(RS)'
 	$(Q)echo
@@ -50,8 +71,28 @@ help:
 	$(Q)echo '$(CY)shell$(RS)   - $(BL)starts an interactive shell in a docker dev env.$(RS)'
 	$(Q)echo
 
-.PHONY: pip
-install: apt pip 
+
+PY_VERS ?= 3.10.5
+PY_DIR = Python-$(PY_VERS)
+PY_URL = https://www.python.org/ftp/python/$(PY_VERS)/$(PY_DIR).tgz
+
+define py-vers
+python3 -V | cut -d ' ' -f 2
+endef
+
+.PHONY: python
+python: apt
+ifneq ($(shell $(call py-vers)),$(PY_VERS))
+	$(Q)cd /tmp && \
+	wget --directory-prefix /tmp --$(PY_URL) | tar x && \
+	cd $(PY_DIR) && \
+ 	./configure && \
+	make && \
+	sudo make install	
+endif
+
+.PHONY: install
+install: apt python pip 
 
 .PHONY: run
 run:

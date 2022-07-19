@@ -6,37 +6,31 @@
 
 # REQ: Creates HTML5 color roles. <skr>
 
-from discord import Intents as intents
-from discord import Game as game
-from discord import Color as color
-from discord.ext.commands import Bot as bot
-from os import environ as env
-from webcolors import CSS3_NAMES_TO_HEX as names
+from discord import Intents
+from discord import Game
+from discord import Colour
+from discord.ext.commands import Bot
+from os import environ
+from webcolors import CSS3_NAMES_TO_HEX
 
 PREFIX = '!'
 
-COLOR = color.default()
-INTENTS = intents.default()
+HOIST = True
+INTENTS = Intents.default()
 
-ACTIVITY = game(name="musical notes 🎶")
+ACTIVITY = Game(name="musical notes 🎶")
 
-TOKEN = env['DISCORD_TOKEN']
+TOKEN = environ['DISCORD_TOKEN']
 
-BOT = bot(command_prefix=PREFIX, intents=INTENTS, activity=ACTIVITY)
+BOT = Bot(command_prefix=PREFIX, intents=INTENTS, activity=ACTIVITY)
 
-@BOT.command(aliases='rock')
-@BOT.has_permissions(manage_roles=True)
-async def sing(ctx):
-    guild = ctx.guild
-    
-    for name, hex in names.items: 
-        await ctx.send(f'{name}:{hex}')
+@BOT.command(aliases=['rock','punk'])
+async def sing(context):
+    for name, hex in CSS3_NAMES_TO_HEX.items(): 
+        hex_color = Colour.from_str(hex)
 
-    await guild.create_role(name=name,
-                            permissions=discord.Permissions.membership(),
-                            color=COLOR)
-                            hoist=True)
+        await context.send(f'{name}:{hex}')
+        await context.guild.create_role(name=name, color=hex_color, hoist=HOIST)
 
-    await ctx.send(f'Role `{name}` has been created')
 
 BOT.run(TOKEN)
