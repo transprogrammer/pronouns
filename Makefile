@@ -4,11 +4,7 @@
 
 # NOTE: For targets run `make help`. <>
 
-BASENAME ?= $(shell basename $$(git remote get-url))
-
 SHELL = /usr/bin/env bash
-
-TRACE ?= no
 
 ifeq ($(TRACE),yes)
   V = v
@@ -16,9 +12,18 @@ else
   Q = @
 endif
 
+BRANCH_NAME := $(shell git name-rev --name-only HEAD)
+
+REMOTE_NAME := $(shell git config branch.$(BRANCH_NAME).remote)
+REMOTE_URL  := $(shell git config remote.$(REMOTE_NAME).url)
+
+REPO_NAME   := $(shell basename $(REMOTE_URL) .git)
+
 BD := $(shell tput bold)
+
 BL := $(shell tput setaf 4)
 CY := $(shell tput setaf 6)
+
 RS := $(shell tput sgr0)
 
 VENV ?= .venv
@@ -92,10 +97,13 @@ $(APT_PACKAGES) &:
 
 .PHONY: shell
 shell:
-	$(Q)docker container exec -it -- $(BASENAME) /usr/bin/env bash -c ' \
-	  export REMOTE_CONTAINERS_IPC=$$( \
-	    find /tmp -name '\''vscode-remote-containers-ipc*'\'' -type s \
-	      -echo "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);$$SHELL -l'
+	$(Q)docker container exec -it -- $(REPO_NAME) \
+	/usr/bin/env bash -c \
+	'export REMOTE_CONTAINERS_IPC=\
+	$$(\
+	find /tmp -name '\''vscode-remote-containers-ipc*'\'' \
+	-type s -printf "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1\
+	);$$SHELL -l'
 
 .PHONY: clean
 clean:
