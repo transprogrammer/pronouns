@@ -2,9 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# NOTE: For a list of targets, run `make help`. <skr>
+# NOTE: For targets run `make help`. <>
 
-NAME = euphony
+BASENAME ?= $(shell basename $$(git remote get-url))
 
 SHELL = /usr/bin/env bash
 
@@ -32,7 +32,7 @@ help:
 	$(Q)echo
 	$(Q)echo '$(CY)install$(RS) - $(BL)runs install targets.$(RS)'
 	$(Q)echo '$(CY)run$(RS)     - $(BL)runs harmony.$(RS)'
-	$(Q)echo '$(CY)clean$(RS)     - $(BL)cleans up file targets.$(RS)'
+	$(Q)echo '$(CY)clean$(RS)   - $(BL)cleans up file targets.$(RS)'
 	$(Q)echo
 	$(Q)echo '$(BD)Install:$(RS)'
 	$(Q)echo
@@ -67,11 +67,17 @@ source $(VENV)/bin/activate
 endef
 
 .PHONY: venv
-ifeq ($(shell dpkg-query -W --showformat='$${db:Status-Status}' python3-venv),installed)
+ifeq ($(shell $(call dpkg-query,python-venv)),0)
 venv: $(VENV)
 else
 venv: python3-venv $(VENV)
 endif
+
+define dpkg-query 
+status=$$(dpkg-query --show --showformat='$${db:Status-Status}' $(1));
+[[ $status == installed ]];
+echo $?
+endef
 
 $(VENV):
 	$(Q)python3 -m venv .venv
@@ -86,7 +92,7 @@ $(APT_PACKAGES) &:
 
 .PHONY: shell
 shell:
-	$(Q)docker container exec -it -- $(NAME) /usr/bin/env bash -c ' \
+	$(Q)docker container exec -it -- $(BASENAME) /usr/bin/env bash -c ' \
 	  export REMOTE_CONTAINERS_IPC=$$( \
 	    find /tmp -name '\''vscode-remote-containers-ipc*'\'' -type s \
 	      -echo "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);$$SHELL -l'
