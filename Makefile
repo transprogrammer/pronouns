@@ -71,18 +71,19 @@ define activate
 source $(VENV)/bin/activate
 endef
 
+define dpkg-query 
+status=$$(dpkg-query --show --showformat='$${db:Status-Status}' $(1)); \
+[[ $$status == installed ]]; \
+echo $$?
+endef
+
 .PHONY: venv
-ifeq ($(shell $(call dpkg-query,python-venv)),0)
+ifeq ($(shell $(call dpkg-query,python3-venv)),0)
 venv: $(VENV)
 else
 venv: python3-venv $(VENV)
+	echo here:$(shell $(call dpkg-query,python3-venv))
 endif
-
-define dpkg-query 
-status=$$(dpkg-query --show --showformat='$${db:Status-Status}' $(1));
-[[ $status == installed ]];
-echo $?
-endef
 
 $(VENV):
 	$(Q)python3 -m venv .venv
