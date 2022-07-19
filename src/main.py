@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-# Create HTML5 color roles. <>
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# REQ: Creates HTML5 color roles. <skr>
 
 from discord import Intents as intents
 from discord import Game as game
@@ -16,10 +20,10 @@ TOKEN = env['DISCORD_TOKEN']
 
 INTENTS = intents.default()
 
-bot = bot(command_prefix=PREFIX, intents=INTENTS, activity=ACTIVITY)
+BOT = bot(command_prefix=PREFIX, intents=INTENTS, activity=ACTIVITY)
 
-@bot.command()
-async def ping(ctx):
-    await ctx.send('pong')
+@BOT.command()
+async def sing(ctx):
+    await ctx.send('song')
 
-bot.run(TOKEN)
+BOT.run(TOKEN)
