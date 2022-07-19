@@ -2,18 +2,24 @@
 
 # Create HTML5 color roles. <>
 
-from lib.client import Client
-import discord
+from discord import Intents as intents
+from discord import Game as game
+from discord.ext.commands import Bot as bot
 from os import environ as env
 
-GAME = "growing up"
+GAME = "musical notes 🎶"
+ACTIVITY = game(name=GAME)
+
+PREFIX = '!'
 
 TOKEN = env['DISCORD_TOKEN']
 
-intents = discord.Intents.default()
+INTENTS = intents.default()
 
-activity = discord.Game(name=GAME)
+bot = bot(command_prefix=PREFIX, intents=INTENTS, activity=ACTIVITY)
 
-client = Client(intents=intents, activity=activity)
+@bot.command()
+async def ping(ctx):
+    await ctx.send('pong')
 
-client.run(TOKEN)
+bot.run(TOKEN)
