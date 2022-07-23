@@ -6,44 +6,40 @@
 
 SHELL = /usr/bin/env bash
 
-ifneq ($(TRACE),yes)
-  Q = @
-endif
-
-.PHONY: help
-help:
-	$(Q)echo
-	$(Q)echo '$(BD)Main:$(RS)'
-	$(Q)echo
-	$(Q)echo '$(CY)install$(RS)   - $(BL)runs install targets.$(RS)'
-	$(Q)echo '$(CY)run$(RS)       - $(BL)runs harmony.$(RS)'
-	$(Q)echo '$(CY)clean$(RS)     - $(BL)cleans up file targets.$(RS)'
-	$(Q)echo '$(CY)reset$(RS)     - $(BL)resets the project.$(RS)'
-	$(Q)echo
-	$(Q)echo '$(BD)Install:$(RS)'
-	$(Q)echo
-	$(Q)echo '$(CY)apt$(RS)       - $(BL)installs apt packages.$(RS)'
-	$(Q)echo '$(CY)python$(RS)    - $(BL)installs python.$(RS)'
-	$(Q)echo '$(CY)pip$(RS)       - $(BL)installs pip packages.$(RS)'
-	$(Q)echo '$(CY)venv$(RS)      - $(BL)creates the python venv.$(RS)'
-	$(Q)echo
-	$(Q)echo '$(BD)Utility:$(RS)'
-	$(Q)echo
-	$(Q)echo '$(CY)container$(RS) - $(BL)creates a debian podman container.$(RS)'
-	$(Q)echo '$(CY)shell$(RS)     - $(BL)starts an interactive container shell.$(RS)'
-	$(Q)echo
-
-BRANCH_NAME := $(shell git name-rev --name-only HEAD)
-
-REMOTE_NAME := $(shell git config branch.$(BRANCH_NAME).remote)
-REMOTE_URL  := $(shell git config remote.$(REMOTE_NAME).url)
-
-REPO_NAME   := $(shell basename $(REMOTE_URL) .git)
-
 BD := $(shell tput bold)
 BL := $(shell tput setaf 4)
 CY := $(shell tput setaf 6)
 RS := $(shell tput sgr0)
+
+.PHONY: help
+help:
+	echo
+	echo '$(BD)podman:$(RS)'
+	echo
+	echo '$(CY)create$(RS)    - $(BL)creates the debian container.$(RS)'
+	echo '$(CY)rm$(RS)        - $(BL)removes the debian container.$(RS)'
+	echo '$(CY)start$(RS)     - $(BL)starts the debian container.$(RS)'
+	echo
+	echo '$(BD)Main:$(RS)'
+	echo
+	echo '$(CY)install$(RS)   - $(BL)runs install targets.$(RS)'
+	echo '$(CY)run$(RS)       - $(BL)runs harmony.$(RS)'
+	echo '$(CY)clean$(RS)     - $(BL)cleans up file targets.$(RS)'
+	echo '$(CY)reset$(RS)     - $(BL)resets the project.$(RS)'
+	echo
+	echo '$(BD)Install:$(RS)'
+	echo
+	echo '$(CY)apt$(RS)       - $(BL)installs apt packages.$(RS)'
+	echo '$(CY)python$(RS)    - $(BL)installs python.$(RS)'
+	echo '$(CY)pip$(RS)       - $(BL)installs pip packages.$(RS)'
+	echo '$(CY)venv$(RS)      - $(BL)creates the python venv.$(RS)'
+	echo
+
+.PHONY: rm
+reset:
+ifeq ($(shell $(call container_exists,$(NAME))),0)	
+	podman rm $(NAME) 
+endif
 
 VENV ?= .venv
 
@@ -80,7 +76,7 @@ endef
 .PHONY: python
 python: apt
 ifneq ($(shell $(call py-vers)),$(PY_VERS))
-	$(Q)cd /tmp && \
+	cd /tmp && \
 	wget --directory-prefix /tmp --$(PY_URL) | tar x && \
 	cd $(PY_DIR) && \
  	./configure && \
@@ -93,17 +89,17 @@ install: apt python pip
 
 .PHONY: run
 run: install
-	$(Q)$(call activate); \
+	$(call activate); \
 	src/main.py
 
 .PHONY: pip
 pip: $(VENV)
-	$(Q)$(call activate); \
+	$(call activate); \
 	python3 -m pip install -r requirements.txt
 
 .PHONY: exec-main
 exec-main:
-	$(Q)src/main.py || $(info run failed.)
+	src/main.py || $(info run failed.)
 
 define activate
 source $(VENV)/bin/activate
@@ -124,15 +120,15 @@ venv: python3-venv $(VENV)
 endif
 
 $(VENV):
-	$(Q)python3 -m venv .venv
+	python3 -m venv .venv
 
 .PHONY: apt
 apt: $(APT_PACKAGES)
 
 .PHONY: $(APT_PACKAGES)
 $(APT_PACKAGES) &:
-	$(Q)sudo apt-get update
-	$(Q)sudo apt-get install $(APT_PACKAGES)
+	sudo apt-get update
+	sudo apt-get install $(APT_PACKAGES)
 
 COMMITISH = @{u}
 REVISION  = $(shell git rev-parse --abbrev-ref $(COMMITISH))
@@ -144,25 +140,31 @@ podman container exists $(1) 2>/dev/null; echo $$?
 endef
 
  .PHONY: container
+container: IMAGE = debian:bookworm-slim
 container:
 ifeq ($(shell $(call container_exists,$(NAME))),1)	
-	$(Q)podman create --name $(NAME) --interactive --tty -- debian:bookworm-slim	
+	podman create \
+	--tty \
+  --interactive \
+  --mount type=bind,source=$(PWD),destination=/src \
+  --name $(NAME) \
+  -- $(IMAGE) 
 endif
 
 .PHONY: shell
 shell:
-	$(Q)podman start --attach -- $(NAME)
+	podman start --attach -- $(NAME)
 
 .PHONY: clean
 clean:
-	$(Q)rm -fr$(V) $(VENV)
+	rm -fr$(V) $(VENV)
 
 .PHONY: reset
 reset: clean
 ifeq ($(shell $(call container_exists,$(NAME))),0)	
-	$(Q)podman rm $(NAME) 
+	podman rm $(NAME) 
 endif
-	$(Q)git config --local --remove-section user 2>/dev/null || [[ $$? -eq 128 ]]
+	git config --local --remove-section user 2>/dev/null || [[ $$? -eq 128 ]]
 
 FORCE:
 
