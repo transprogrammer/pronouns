@@ -91,7 +91,7 @@ endif
 install: apt python pip 
 
 .PHONY: run
-run:
+run: install
 	$(Q)$(call activate); \
 	src/main.py
 
