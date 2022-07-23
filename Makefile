@@ -6,11 +6,31 @@
 
 SHELL = /usr/bin/env bash
 
-ifeq ($(TRACE),yes)
-  V = v
-else
+ifneq ($(TRACE),yes)
   Q = @
 endif
+
+.PHONY: help
+help:
+	$(Q)echo
+	$(Q)echo '$(BD)Main:$(RS)'
+	$(Q)echo
+	$(Q)echo '$(CY)install$(RS) - $(BL)runs install targets.$(RS)'
+	$(Q)echo '$(CY)run$(RS)     - $(BL)runs harmony.$(RS)'
+	$(Q)echo '$(CY)clean$(RS)   - $(BL)cleans up file targets.$(RS)'
+	$(Q)echo '$(CY)reset$(RS)   - $(BL)resets the project.$(RS)'
+	$(Q)echo
+	$(Q)echo '$(BD)Install:$(RS)'
+	$(Q)echo
+	$(Q)echo '$(CY)apt$(RS)     - $(BL)installs apt packages.$(RS)'
+	$(Q)echo '$(CY)python$(RS)  - $(BL)installs python.$(RS)'
+	$(Q)echo '$(CY)pip$(RS)     - $(BL)installs pip packages.$(RS)'
+	$(Q)echo '$(CY)venv$(RS)    - $(BL)creates the python venv.$(RS)'
+	$(Q)echo
+	$(Q)echo '$(BD)Utility:$(RS)'
+	$(Q)echo
+	$(Q)echo '$(CY)shell$(RS)   - $(BL)starts an interactive shell in a docker dev env.$(RS)'
+	$(Q)echo
 
 BRANCH_NAME := $(shell git name-rev --name-only HEAD)
 
@@ -20,10 +40,8 @@ REMOTE_URL  := $(shell git config remote.$(REMOTE_NAME).url)
 REPO_NAME   := $(shell basename $(REMOTE_URL) .git)
 
 BD := $(shell tput bold)
-
 BL := $(shell tput setaf 4)
 CY := $(shell tput setaf 6)
-
 RS := $(shell tput sgr0)
 
 VENV ?= .venv
@@ -50,26 +68,6 @@ APT_PACKAGES += uuid-dev
 APT_PACKAGES += xvfb
 APT_PACKAGES += zlib1g-dev
 
-.PHONY: help
-help:
-	$(Q)echo
-	$(Q)echo '$(BD)Main:$(RS)'
-	$(Q)echo
-	$(Q)echo '$(CY)install$(RS) - $(BL)runs install targets.$(RS)'
-	$(Q)echo '$(CY)run$(RS)     - $(BL)runs harmony.$(RS)'
-	$(Q)echo '$(CY)clean$(RS)   - $(BL)cleans up file targets.$(RS)'
-	$(Q)echo
-	$(Q)echo '$(BD)Install:$(RS)'
-	$(Q)echo
-	$(Q)echo '$(CY)apt$(RS)     - $(BL)installs apt packages.$(RS)'
-	$(Q)echo '$(CY)python$(RS)  - $(BL)installs python.$(RS)'
-	$(Q)echo '$(CY)pip$(RS)     - $(BL)installs pip packages.$(RS)'
-	$(Q)echo '$(CY)venv$(RS)    - $(BL)creates the python venv.$(RS)'
-	$(Q)echo
-	$(Q)echo '$(BD)Utility:$(RS)'
-	$(Q)echo
-	$(Q)echo '$(CY)shell$(RS)   - $(BL)starts an interactive shell in a docker dev env.$(RS)'
-	$(Q)echo
 
 
 PY_VERS ?= 3.10.5
@@ -138,16 +136,23 @@ $(APT_PACKAGES) &:
 	$(Q)sudo apt-get install $(APT_PACKAGES)
 
 .PHONY: shell
+shell: COMMITISH = @{u}
+shell: REVISION := $(shell git rev-parse --abbrev-ref $(COMMITISH))
+shell: REMOTE   := $(shell cut -d/ -f1 <<<$(REVISION))
+shell: NAME     := $(shell basename $$(git remote get-url $(REMOTE)))
 shell:
-	$(Q)docker container exec -it -- $(REPO_NAME) \
+	$(Q)docker container exec -it -- $(NAME) \
 	/usr/bin/env bash -c 'export REMOTE_CONTAINERS_IPC=\
 	$$(find /tmp -name '\''vscode-remote-containers-ipc*'\'' \
-	-type s -printf "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);\
-	$$SHELL -l'
+	-type s -print
 
 .PHONY: clean
 clean:
 	$(Q)rm -fr$(V) $(VENV)
+
+.PHONY: reset
+reset: clean
+	$(Q)git config --local --remove-section user 2>/dev/null || [[ $$? -eq 128 ]]
 
 FORCE:
 
