@@ -144,7 +144,8 @@ shell:
 	$(Q)docker container exec -it -- $(NAME) \
 	/usr/bin/env bash -c 'export REMOTE_CONTAINERS_IPC=\
 	$$(find /tmp -name '\''vscode-remote-containers-ipc*'\'' \
-	-type s -print
+	-type s -printf "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);\
+	$$SHELL -l'
 
 .PHONY: clean
 clean:
