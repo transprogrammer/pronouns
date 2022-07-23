@@ -68,8 +68,6 @@ APT_PACKAGES += uuid-dev
 APT_PACKAGES += xvfb
 APT_PACKAGES += zlib1g-dev
 
-
-
 PY_VERS ?= 3.10.5
 PY_DIR = Python-$(PY_VERS)
 PY_URL = https://www.python.org/ftp/python/$(PY_VERS)/$(PY_DIR).tgz
@@ -111,7 +109,7 @@ source $(VENV)/bin/activate
 endef
 
 define dpkg-query 
-status=$$(dpkg-query --show --showformat='$${db:Status-Status}' $(1)); \
+status=$$(dpkg-query --show --showformat='$${db:Status-Status}' $(1) 2>/dev/null); \
 [[ $$status == installed ]]; \
 echo $$?
 endef
