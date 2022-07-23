@@ -137,7 +137,7 @@ $(APT_PACKAGES) &:
 shell: COMMITISH = @{u}
 shell: REVISION := $(shell git rev-parse --abbrev-ref $(COMMITISH))
 shell: REMOTE   := $(shell cut -d/ -f1 <<<$(REVISION))
-shell: NAME     := $(shell basename $$(git remote get-url $(REMOTE)))
+shell: NAME     := $(shell basename $$(git remote get-url $(REMOTE)) .git)
 shell:
 	$(Q)docker container exec -it -- $(NAME) \
 	/usr/bin/env bash -c 'export REMOTE_CONTAINERS_IPC=\

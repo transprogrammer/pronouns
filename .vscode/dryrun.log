@@ -1,0 +1,22 @@
+make: Entering directory `/Users/srage/sxc/harmonia'
+echo
+echo '[1mMain:(B[m'
+echo
+echo '[36minstall(B[m - [34mruns install targets.(B[m'
+echo '[36mrun(B[m     - [34mruns harmony.(B[m'
+echo '[36mclean(B[m   - [34mcleans up file targets.(B[m'
+echo '[36mreset(B[m   - [34mresets the project.(B[m'
+echo
+echo '[1mInstall:(B[m'
+echo
+echo '[36mapt(B[m     - [34minstalls apt packages.(B[m'
+echo '[36mpython(B[m  - [34minstalls python.(B[m'
+echo '[36mpip(B[m     - [34minstalls pip packages.(B[m'
+echo '[36mvenv(B[m    - [34mcreates the python venv.(B[m'
+echo
+echo '[1mUtility:(B[m'
+echo
+echo '[36mshell(B[m   - [34mstarts an interactive shell in a docker dev env.(B[m'
+echo
+make: Leaving directory `/Users/srage/sxc/harmonia'
+ 
