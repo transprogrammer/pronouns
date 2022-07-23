@@ -139,9 +139,13 @@ REVISION  = $(shell git rev-parse --abbrev-ref $(COMMITISH))
 REMOTE    = $(shell cut -d/ -f1 <<<$(REVISION))
 NAME      = $(shell basename $$(git remote get-url $(REMOTE)) .git)
 
+define container_exists
+podman container exists $(1) 2>/dev/null; echo $$?
+endef
+
  .PHONY: container
 container:
-ifeq ($(shell $(call container_exists,$(NAME))),0)	
+ifeq ($(shell $(call container_exists,$(NAME))),1)	
 	$(Q)podman create --name $(NAME) --interactive --tty -- debian:bookworm-slim	
 endif
 
@@ -152,10 +156,6 @@ shell:
 .PHONY: clean
 clean:
 	$(Q)rm -fr$(V) $(VENV)
-
-define container_exists
-podman container exists $(1) 2>/dev/null; echo $$?
-endef
 
 .PHONY: reset
 reset: clean
