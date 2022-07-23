@@ -134,14 +134,16 @@ $(APT_PACKAGES) &:
 	$(Q)sudo apt-get update
 	$(Q)sudo apt-get install $(APT_PACKAGES)
 
-container shell reset: COMMITISH = @{u}
-container shell reset: REVISION := $(shell git rev-parse --abbrev-ref $(COMMITISH))
-container shell reset: REMOTE   := $(shell cut -d/ -f1 <<<$(REVISION))
-container shell reset: NAME     := $(shell basename $$(git remote get-url $(REMOTE)) .git)
+COMMITISH = @{u}
+REVISION  = $(shell git rev-parse --abbrev-ref $(COMMITISH))
+REMOTE    = $(shell cut -d/ -f1 <<<$(REVISION))
+NAME      = $(shell basename $$(git remote get-url $(REMOTE)) .git)
 
  .PHONY: container
 container:
+ifeq ($(shell $(call container_exists,$(NAME))),0)	
 	$(Q)podman create --name $(NAME) --interactive --tty -- debian:bookworm-slim	
+endif
 
 .PHONY: shell
 shell:
@@ -151,9 +153,15 @@ shell:
 clean:
 	$(Q)rm -fr$(V) $(VENV)
 
+define container_exists
+podman container exists $(1) 2>/dev/null; echo $$?
+endef
+
 .PHONY: reset
 reset: clean
+ifeq ($(shell $(call container_exists,$(NAME))),0)	
 	$(Q)podman rm $(NAME) 
+endif
 	$(Q)git config --local --remove-section user 2>/dev/null || [[ $$? -eq 128 ]]
 
 FORCE:
