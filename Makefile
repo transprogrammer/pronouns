@@ -15,21 +15,22 @@ help:
 	$(Q)echo
 	$(Q)echo '$(BD)Main:$(RS)'
 	$(Q)echo
-	$(Q)echo '$(CY)install$(RS) - $(BL)runs install targets.$(RS)'
-	$(Q)echo '$(CY)run$(RS)     - $(BL)runs harmony.$(RS)'
-	$(Q)echo '$(CY)clean$(RS)   - $(BL)cleans up file targets.$(RS)'
-	$(Q)echo '$(CY)reset$(RS)   - $(BL)resets the project.$(RS)'
+	$(Q)echo '$(CY)install$(RS)   - $(BL)runs install targets.$(RS)'
+	$(Q)echo '$(CY)run$(RS)       - $(BL)runs harmony.$(RS)'
+	$(Q)echo '$(CY)clean$(RS)     - $(BL)cleans up file targets.$(RS)'
+	$(Q)echo '$(CY)reset$(RS)     - $(BL)resets the project.$(RS)'
 	$(Q)echo
 	$(Q)echo '$(BD)Install:$(RS)'
 	$(Q)echo
-	$(Q)echo '$(CY)apt$(RS)     - $(BL)installs apt packages.$(RS)'
-	$(Q)echo '$(CY)python$(RS)  - $(BL)installs python.$(RS)'
-	$(Q)echo '$(CY)pip$(RS)     - $(BL)installs pip packages.$(RS)'
-	$(Q)echo '$(CY)venv$(RS)    - $(BL)creates the python venv.$(RS)'
+	$(Q)echo '$(CY)apt$(RS)       - $(BL)installs apt packages.$(RS)'
+	$(Q)echo '$(CY)python$(RS)    - $(BL)installs python.$(RS)'
+	$(Q)echo '$(CY)pip$(RS)       - $(BL)installs pip packages.$(RS)'
+	$(Q)echo '$(CY)venv$(RS)      - $(BL)creates the python venv.$(RS)'
 	$(Q)echo
 	$(Q)echo '$(BD)Utility:$(RS)'
 	$(Q)echo
-	$(Q)echo '$(CY)shell$(RS)   - $(BL)starts an interactive shell in a docker dev env.$(RS)'
+	$(Q)echo '$(CY)container$(RS) - $(BL)creates a debian podman container.$(RS)'
+	$(Q)echo '$(CY)shell$(RS)     - $(BL)starts an interactive container shell.$(RS)'
 	$(Q)echo
 
 BRANCH_NAME := $(shell git name-rev --name-only HEAD)
@@ -133,17 +134,18 @@ $(APT_PACKAGES) &:
 	$(Q)sudo apt-get update
 	$(Q)sudo apt-get install $(APT_PACKAGES)
 
+container shell reset: COMMITISH = @{u}
+container shell reset: REVISION := $(shell git rev-parse --abbrev-ref $(COMMITISH))
+container shell reset: REMOTE   := $(shell cut -d/ -f1 <<<$(REVISION))
+container shell reset: NAME     := $(shell basename $$(git remote get-url $(REMOTE)) .git)
+
+ .PHONY: container
+container:
+	$(Q)podman create --name $(NAME) --interactive --tty -- debian:bookworm-slim	
+
 .PHONY: shell
-shell: COMMITISH = @{u}
-shell: REVISION := $(shell git rev-parse --abbrev-ref $(COMMITISH))
-shell: REMOTE   := $(shell cut -d/ -f1 <<<$(REVISION))
-shell: NAME     := $(shell basename $$(git remote get-url $(REMOTE)) .git)
 shell:
-	$(Q)docker container exec -it -- $(NAME) \
-	/usr/bin/env bash -c 'export REMOTE_CONTAINERS_IPC=\
-	$$(find /tmp -name '\''vscode-remote-containers-ipc*'\'' \
-	-type s -printf "%T@ %p\n" | sort -n | cut -d " " -f 2- | tail -n 1);\
-	$$SHELL -l'
+	$(Q)podman start --attach -- $(NAME)
 
 .PHONY: clean
 clean:
@@ -151,6 +153,7 @@ clean:
 
 .PHONY: reset
 reset: clean
+	$(Q)podman rm $(NAME) 
 	$(Q)git config --local --remove-section user 2>/dev/null || [[ $$? -eq 128 ]]
 
 FORCE:
