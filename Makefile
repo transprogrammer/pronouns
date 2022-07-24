@@ -23,50 +23,31 @@ $(CY)reset$(RS)           - $(BL)resets the project.$(RS)\n\
 \n\
 $(BD)build:$(RS)\n\
 \n\
-$(CY)apt$(RS)             - $(BL)installs apt packages.$(RS)\n\
-$(CY)python$(RS)          - $(BL)installs python.$(RS)\n\
-$(CY)pip$(RS)             - $(BL)installs pip packages.$(RS)\n\
-$(CY)venv$(RS)            - $(BL)creates the python venv.$(RS)\n\
+$(CY)apt$(RS)              - $(BL)installs apt packages.$(RS)\n\
+$(CY)python$(RS)           - $(BL)installs python.$(RS)\n\
+$(CY)pip$(RS)              - $(BL)installs pip packages.$(RS)\n\
+$(CY)venv$(RS)             - $(BL)creates the python venv.$(RS)\n\
 \n\
-$(BD)utility:$(RS)\n\
+$(BD)podman:$(RS)\n\
 \n\
-$(CY)machine$(RS)         - $(BL)creates the machine.$(RS)\n\
-$(CY)start-machine$(RS)   - $(BL)starts the machine.$(RS)\n\
-$(CY)rm-machine$(RS)      - $(BL)removes the machine.$(RS)\n\
-$(CY)container$(RS)       - $(BL)creates the container.$(RS)\n\
-$(CY)start-container$(RS) - $(BL)starts the container.$(RS)\n\
-$(CY)rm-container$(RS)    - $(BL)removes the container.$(RS)\n\
+$(CY)machine$(RS)          - $(BL)creates the machine.$(RS)\n\
+$(CY)start-machine$(RS)    - $(BL)starts the machine.$(RS)\n\
+$(CY)stop-machine$(RS)     - $(BL)starts the machine.$(RS)\n\
+$(CY)restart-machine$(RS) - $(BL)restarts the machine.$(RS)\n\
+$(CY)remove-machine$(RS)   - $(BL)removes the machine.$(RS)\n\
+\n\
+$(CY)container$(RS)        - $(BL)creates the container.$(RS)\n\
+$(CY)start-container$(RS)  - $(BL)starts the container.$(RS)\n\
+$(CY)remove-container$(RS) - $(BL)removes the container.$(RS)\n\
 \n'
 
 .PHONY: rm
 reset:
-ifeq ($(shell $(call container_exists,$(NAME))),0)	
-	podman rm $(NAME) 
+ifeq ($(shell $(call container_exists,$(CONTAINER))),0)	
+	podman rm $(CONTAINER) 
 endif
 
 VENV ?= .venv
-
-APT_PACKAGES += build-essential
-APT_PACKAGES += ccache
-APT_PACKAGES += gdb
-APT_PACKAGES += lcov
-APT_PACKAGES += libb2-dev
-APT_PACKAGES += libbz2-dev
-APT_PACKAGES += libffi-dev
-APT_PACKAGES += libgdbm-compat-dev
-APT_PACKAGES += libgdbm-dev
-APT_PACKAGES += liblzma-dev
-APT_PACKAGES += libncurses5-dev
-APT_PACKAGES += libreadline6-dev
-APT_PACKAGES += libsqlite3-dev
-APT_PACKAGES += libssl-dev
-APT_PACKAGES += lzma
-APT_PACKAGES += lzma-dev
-APT_PACKAGES += pkg-config
-APT_PACKAGES += tk-dev
-APT_PACKAGES += uuid-dev
-APT_PACKAGES += xvfb
-APT_PACKAGES += zlib1g-dev
 
 PY_VERS ?= 3.10.5
 PY_DIR = Python-$(PY_VERS)
@@ -133,63 +114,79 @@ $(APT_PACKAGES) &:
 	sudo apt-get update
 	sudo apt-get install $(APT_PACKAGES)
 
-MACHINE_NAME = podman-machine-default
+MACHINE = podman-machine-default
 
 COMMITISH = @{u}
 REVISION  = $(shell git rev-parse --abbrev-ref $(COMMITISH))
 REMOTE    = $(shell cut -d/ -f1 <<<$(REVISION))
-NAME      = $(shell basename $$(git remote get-url $(REMOTE)) .git)
+CONTAINER = $(shell basename $$(git remote get-url $(REMOTE)) .git)
 
 define machine_exists
-podman machine inspect $(MACHINE_NAME) >/dev/null 2>&1; echo $$?
+podman machine inspect $(MACHINE) >/dev/null 2>&1; echo $$?
 endef
 
 .PHONY: machine
 machine:
-ifeq ($(shell $(call machine_exists)),125)	
+ifeq ($(shell $(call machine_exists)),125)
 	podman machine init
 endif
 
 define machine_running
-state=$$(podman machine inspect $(MACHINE_NAME) | jq -r .[0].State); 
+state=$$(podman machine inspect $(MACHINE) | jq -r .[0].State); 
 [[ $$state == running ]];
 echo $$?
 endef
 
+define command_machine
+podman machine $(1) $(MACHINE)
+endef
+
 .PHONY: start-machine
 start-machine: machine
-ifeq ($(shell $(call machine_running)),1)
-	podman machine start
-endif
+	$(if $(filter $(shell $(call machine_running)),1),\
+	$(call command_machine,start),\
+	$(error here))
 
-.PHONY: rm-machine
-rm-machine:
-	podman machine rm
+.PHONY: stop-machine
+stop-machine:
+	podman machine stop $(MACHINE)
+
+.PHONY: remove-machine
+remove-machine:
+	podman machine rm $(MACHINE)
+
+.PHONY: restart-machine
+ifeq ($(shell $(call machine_exists)),125)	
+restart-machine: stop-machine start-machine
+	$(error machine $(MACHINE) does not exist.)
+else
+restart-machine: stop-machine start-machine
+endif
 
 define container_exists
 podman container exists $(1) 2>/dev/null; echo $$?
 endef
 
  .PHONY: container
-container: IMAGE = debian:bookworm-slim
+container: IMAGE = debian:bookworemove-slim
 container:
-ifeq ($(shell $(call container_exists,$(NAME))),1)	
+ifeq ($(shell $(call container_exists,$(CONTAINER))),1)	
 	podman create \
 	--tty \
   --interactive \
   --mount type=bind,source=$(PWD),destination=/src \
-  --name $(NAME) \
+  --name $(CONTAINER) \
   -- $(IMAGE) 
 endif
 
 .PHONY: start-container
 start-container: container
-	podman start --attach -- $(NAME)
+	podman start --attach -- $(CONTAINER)
 
-.PHONY: rm-container
-rm-container:
-ifeq ($(shell $(call container_exists,$(NAME))),0)	
-	podman rm $(NAME) 
+.PHONY: remove-container
+remove-container:
+ifeq ($(shell $(call container_exists,$(CONTAINER))),0)	
+	podman rm $(CONTAINER) 
 endif
 
 .PHONY: clean
@@ -197,7 +194,7 @@ clean:
 	rm -fr$(V) $(VENV)
 
 .PHONY: reset
-reset: rm-container clean
+reset: remove-container clean
 	git config --local --remove-section user 2>/dev/null || [[ $$? -eq 128 ]]
 
 FORCE:
