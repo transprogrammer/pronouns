@@ -30,6 +30,7 @@ $(CY)venv$(RS)            - $(BL)creates the python venv.$(RS)\n\
 \n\
 $(BD)utility:$(RS)\n\
 \n\
+$(CY)machine$(RS)         - $(BL)creates the machine.$(RS)\n\
 $(CY)container$(RS)       - $(BL)creates the container.$(RS)\n\
 $(CY)start-container$(RS) - $(BL)starts the container.$(RS)\n\
 $(CY)rm-container$(RS)    - $(BL)removes the container.$(RS)\n\
@@ -134,6 +135,26 @@ COMMITISH = @{u}
 REVISION  = $(shell git rev-parse --abbrev-ref $(COMMITISH))
 REMOTE    = $(shell cut -d/ -f1 <<<$(REVISION))
 NAME      = $(shell basename $$(git remote get-url $(REMOTE)) .git)
+
+
+define machine_exists
+endif
+podman machine inspect 2>/dev/null; echo $$?
+endef
+
+.PHONY: machine
+machine:
+ifeq ($(shell $(call machine_exists,$(NAME))),125)	
+	podman machine init
+endif
+
+.PHONY: start-machine
+start-machine: machine
+	podman machine start
+
+.PHONY: rm-machine
+rm-machine:
+	podman machine rm
 
 define container_exists
 podman container exists $(1) 2>/dev/null; echo $$?
