@@ -4,6 +4,8 @@
 
 # NOTE: For targets run `make help`. <>
 
+# TODO: Complete podman machine workflows. <skr 2022-07>
+
 SHELL = /usr/bin/env bash
 
 BD := $(shell tput bold)
