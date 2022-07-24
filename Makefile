@@ -16,23 +16,23 @@ help:
 	@printf '\n\
 $(BD)main:$(RS)\n\
 \n\
-$(CY)all$(RS)          - $(BL)installs build targets.$(RS)\n\
-$(CY)clean$(RS)        - $(BL)uninstalls build targets.$(RS)\n\
-$(CY)reset$(RS)        - $(BL)resets the project.$(RS)\n\
+$(CY)all$(RS)             - $(BL)installs build targets.$(RS)\n\
+$(CY)run$(RS)             - $(BL)runs harmony.$(RS)\n\
+$(CY)clean$(RS)           - $(BL)uninstalls build targets.$(RS)\n\
+$(CY)reset$(RS)           - $(BL)resets the project.$(RS)\n\
 \n\
 $(BD)build:$(RS)\n\
 \n\
-$(CY)apt$(RS)          - $(BL)installs apt packages.$(RS)\n\
-$(CY)python$(RS)       - $(BL)installs python.$(RS)\n\
-$(CY)pip$(RS)          - $(BL)installs pip packages.$(RS)\n\
-$(CY)venv$(RS)         - $(BL)creates the python venv.$(RS)\n\
+$(CY)apt$(RS)             - $(BL)installs apt packages.$(RS)\n\
+$(CY)python$(RS)          - $(BL)installs python.$(RS)\n\
+$(CY)pip$(RS)             - $(BL)installs pip packages.$(RS)\n\
+$(CY)venv$(RS)            - $(BL)creates the python venv.$(RS)\n\
 \n\
 $(BD)utility:$(RS)\n\
 \n\
-$(CY)container$(RS)    - $(BL)creates the debian container.$(RS)\n\
-$(CY)rm-container$(RS) - $(BL)removes the debian container.$(RS)\n\
-$(CY)start$(RS)        - $(BL)starts the debian container.$(RS)\n\
-$(CY)run$(RS)          - $(BL)runs harmony.$(RS)\n\
+$(CY)container$(RS)       - $(BL)creates the container.$(RS)\n\
+$(CY)start-container$(RS) - $(BL)starts the container.$(RS)\n\
+$(CY)rm-container$(RS)    - $(BL)removes the container.$(RS)\n\
 \n'
 
 .PHONY: rm
@@ -151,15 +151,15 @@ ifeq ($(shell $(call container_exists,$(NAME))),1)
   -- $(IMAGE) 
 endif
 
+.PHONY: start-container
+start-container: container
+	podman start --attach -- $(NAME)
+
 .PHONY: rm-container
 rm-container:
 ifeq ($(shell $(call container_exists,$(NAME))),0)	
 	podman rm $(NAME) 
 endif
-
-.PHONY: shell
-shell:
-	podman start --attach -- $(NAME)
 
 .PHONY: clean
 clean:
