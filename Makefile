@@ -164,7 +164,7 @@ podman container exists $(1) 2>/dev/null; echo $$?
 endef
 
  .PHONY: container
-container: IMAGE = debian:bookworemove-slim
+container: IMAGE = debian:bookworm-slim
 container:
 ifeq ($(shell $(call container_exists,$(CONTAINER))),1)	
 	podman create \
