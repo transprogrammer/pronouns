@@ -4,8 +4,6 @@
 
 # NOTE: For targets run `make help`. <>
 
-# TODO: Complete podman machine workflows. <skr 2022-07>
-
 SHELL = /usr/bin/env bash
 
 BD := $(shell tput bold)
@@ -33,6 +31,8 @@ $(CY)venv$(RS)            - $(BL)creates the python venv.$(RS)\n\
 $(BD)utility:$(RS)\n\
 \n\
 $(CY)machine$(RS)         - $(BL)creates the machine.$(RS)\n\
+$(CY)start-machine$(RS)   - $(BL)starts the machine.$(RS)\n\
+$(CY)rm-machine$(RS)      - $(BL)removes the machine.$(RS)\n\
 $(CY)container$(RS)       - $(BL)creates the container.$(RS)\n\
 $(CY)start-container$(RS) - $(BL)starts the container.$(RS)\n\
 $(CY)rm-container$(RS)    - $(BL)removes the container.$(RS)\n\
@@ -133,26 +133,34 @@ $(APT_PACKAGES) &:
 	sudo apt-get update
 	sudo apt-get install $(APT_PACKAGES)
 
+MACHINE_NAME = podman-machine-default
+
 COMMITISH = @{u}
 REVISION  = $(shell git rev-parse --abbrev-ref $(COMMITISH))
 REMOTE    = $(shell cut -d/ -f1 <<<$(REVISION))
 NAME      = $(shell basename $$(git remote get-url $(REMOTE)) .git)
 
-
 define machine_exists
-endif
-podman machine inspect 2>/dev/null; echo $$?
+podman machine inspect $(MACHINE_NAME) >/dev/null 2>&1; echo $$?
 endef
 
 .PHONY: machine
 machine:
-ifeq ($(shell $(call machine_exists,$(NAME))),125)	
+ifeq ($(shell $(call machine_exists)),125)	
 	podman machine init
 endif
 
+define machine_running
+state=$$(podman machine inspect $(MACHINE_NAME) | jq -r .[0].State); 
+[[ $$state == running ]];
+echo $$?
+endef
+
 .PHONY: start-machine
 start-machine: machine
+ifeq ($(shell $(call machine_running)),1)
 	podman machine start
+endif
 
 .PHONY: rm-machine
 rm-machine:
