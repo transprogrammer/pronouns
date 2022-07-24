@@ -13,27 +13,27 @@ RS := $(shell tput sgr0)
 
 .PHONY: help
 help:
-	echo
-	echo '$(BD)podman:$(RS)'
-	echo
-	echo '$(CY)create$(RS)    - $(BL)creates the debian container.$(RS)'
-	echo '$(CY)rm$(RS)        - $(BL)removes the debian container.$(RS)'
-	echo '$(CY)start$(RS)     - $(BL)starts the debian container.$(RS)'
-	echo
-	echo '$(BD)Main:$(RS)'
-	echo
-	echo '$(CY)install$(RS)   - $(BL)runs install targets.$(RS)'
-	echo '$(CY)run$(RS)       - $(BL)runs harmony.$(RS)'
-	echo '$(CY)clean$(RS)     - $(BL)cleans up file targets.$(RS)'
-	echo '$(CY)reset$(RS)     - $(BL)resets the project.$(RS)'
-	echo
-	echo '$(BD)Install:$(RS)'
-	echo
-	echo '$(CY)apt$(RS)       - $(BL)installs apt packages.$(RS)'
-	echo '$(CY)python$(RS)    - $(BL)installs python.$(RS)'
-	echo '$(CY)pip$(RS)       - $(BL)installs pip packages.$(RS)'
-	echo '$(CY)venv$(RS)      - $(BL)creates the python venv.$(RS)'
-	echo
+	@printf '\n\
+$(BD)main:$(RS)\n\
+\n\
+$(CY)all$(RS)       - $(BL)runs install targets.$(RS)\n\
+$(CY)run$(RS)       - $(BL)runs harmony.$(RS)\n\
+$(CY)clean$(RS)     - $(BL)cleans up file targets.$(RS)\n\
+$(CY)reset$(RS)     - $(BL)resets the project.$(RS)\n\
+\n\
+$(BD)podman:$(RS)\n\
+\n\
+$(CY)create$(RS)    - $(BL)creates the debian container.$(RS)\n\
+$(CY)rm$(RS)        - $(BL)removes the debian container.$(RS)\n\
+$(CY)start$(RS)     - $(BL)starts the debian container.$(RS)\n\
+\n\
+$(BD)install:$(RS)\n\
+\n\
+$(CY)apt$(RS)       - $(BL)installs apt packages.$(RS)\n\
+$(CY)python$(RS)    - $(BL)installs python.$(RS)\n\
+$(CY)pip$(RS)       - $(BL)installs pip packages.$(RS)\n\
+$(CY)venv$(RS)      - $(BL)creates the python venv.$(RS)\n\
+\n'
 
 .PHONY: rm
 reset:
